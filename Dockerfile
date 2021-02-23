@@ -2,7 +2,7 @@ FROM ubuntu:bionic
 
 MAINTAINER "René Moser" <mail@renemoser.net>
 
-ARG src_url=https://dist.apache.org/repos/dist/dev/cloudstack/4.14.1.0/apache-cloudstack-4.14.1.0-src.tar.bz2
+ARG src_url=http://archive.apache.org/dist/cloudstack/releases/4.15.0.0/apache-cloudstack-4.15.0.0-src.tar.bz2
 
 RUN echo 'mysql-server mysql-server/root_password password root' | debconf-set-selections; \
     echo 'mysql-server mysql-server/root_password_again password root' | debconf-set-selections;
@@ -43,9 +43,9 @@ RUN apt-get install -qqy mysql-server && \
 
 RUN (/usr/bin/mysqld_safe &); sleep 5; mysqladmin -u root -proot password ''
 
-RUN wget $src_url -O /opt/cloudstack.tar.gz; \
+RUN wget $src_url -O /opt/cloudstack.tar.bz2; \
     mkdir -p /opt/cloudstack; \
-    tar xvjf /opt/cloudstack.tar.gz -C /opt/cloudstack --strip-components=1
+    tar xvjf /opt/cloudstack.tar.bz2 -C /opt/cloudstack --strip-components=1
 
 WORKDIR /opt/cloudstack
 
