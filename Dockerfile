@@ -1,8 +1,8 @@
-FROM ubuntu:xenial-20181113
+FROM ubuntu:bionic
 
 MAINTAINER "René Moser" <mail@renemoser.net>
 
-ARG src_url=https://github.com/apache/cloudstack/archive/4.13.1.0.tar.gz
+ARG src_url=https://dist.apache.org/repos/dist/dev/cloudstack/4.14.1.0/apache-cloudstack-4.14.1.0-src.tar.bz2
 
 RUN echo 'mysql-server mysql-server/root_password password root' | debconf-set-selections; \
     echo 'mysql-server mysql-server/root_password_again password root' | debconf-set-selections;
@@ -15,7 +15,7 @@ RUN apt-get -y update && apt-get dist-upgrade -y && apt-get install -y \
     ipmitool \
     maven \
     netcat \
-    openjdk-8-jdk \
+    openjdk-11-jdk \
     python-dev \
     python-mysql.connector \
     python-pip \
@@ -35,7 +35,9 @@ RUN mkdir -p /root/.ssh \
     && chmod 0700 /root/.ssh \
     && ssh-keygen -t rsa -N "" -f id_rsa.cloud
 
-RUN mkdir -p /var/run/mysqld; \
+RUN apt-get install -qqy mysql-server && \
+    apt-get clean all && \
+    mkdir -p /var/run/mysqld; \
     chown mysql /var/run/mysqld; \
     echo '''sql_mode = "STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION"''' >> /etc/mysql/mysql.conf.d/mysqld.cnf
 
@@ -43,13 +45,11 @@ RUN (/usr/bin/mysqld_safe &); sleep 5; mysqladmin -u root -proot password ''
 
 RUN wget $src_url -O /opt/cloudstack.tar.gz; \
     mkdir -p /opt/cloudstack; \
-    tar xvzf /opt/cloudstack.tar.gz -C /opt/cloudstack --strip-components=1
+    tar xvjf /opt/cloudstack.tar.gz -C /opt/cloudstack --strip-components=1
 
 WORKDIR /opt/cloudstack
 
 RUN mvn -Pdeveloper -Dsimulator -DskipTests clean install
-RUN mvn -Pdeveloper -Dsimulator dependency:go-offline
-RUN mvn -pl client jetty:run -Dsimulator -Djetty.skip -Dorg.eclipse.jetty.annotations.maxWait=120
 
 RUN (/usr/bin/mysqld_safe &); \
     sleep 5; \
